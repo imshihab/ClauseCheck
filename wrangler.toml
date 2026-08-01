@@ -1,0 +1,8 @@
+name = "contract-review"
+pages_build_output_dir = "./dist"
+compatibility_date = "2026-08-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "contract-review-db"
+database_id = "d2f4d84d-cbac-4419-bd5a-127cb4a89731"
