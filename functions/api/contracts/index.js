@@ -26,8 +26,22 @@ export async function onRequestGet({ request, env }) {
             "SELECT id, title, created_at, uploaded_by FROM contracts ORDER BY created_at ASC, id ASC",
         ).all();
         return json({ contracts: results || [] });
-    } catch (res) {
-        return res;
+    } catch (caught) {
+        // requireUser / requireDB throw Response objects on auth/binding
+        // failure — pass those straight through.
+        if (caught instanceof Response) return caught;
+        // Anything else (missing table, D1 outage, schema mismatch, etc.)
+        // becomes a structured 502 instead of an opaque Cloudflare 500.
+        console.error("[contracts.list] failed:", caught);
+        return json(
+            {
+                error: "contracts_list_failed",
+                message: String(caught?.message || caught),
+                code: caught?.code,
+                cause: caught?.cause?.message,
+            },
+            { status: 502 },
+        );
     }
 }
 
