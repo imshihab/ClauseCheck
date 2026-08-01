@@ -14,6 +14,7 @@ import {
     RotateCcw,
     ScrollText,
     Lightbulb,
+    LogOut,
 } from "lucide-react";
 import {
     Button,
@@ -35,6 +36,8 @@ import {
     loadTestQuestions,
 } from "../lib/data";
 import { analyzeContract } from "../lib/analyze";
+import { useAuth } from "../lib/auth";
+import { useNavigate } from "react-router";
 
 const DECISION_LABELS = {
     pending: {
@@ -67,6 +70,14 @@ function RiskIcon({ level }) {
 }
 
 export default function Dashboard() {
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
+
+    async function handleLogout() {
+        await logout();
+        navigate("/login", { replace: true });
+    }
+
     const [standards, setStandards] = useState([]);
     const [contracts, setContracts] = useState([]);
     const [contractId, setContractId] = useState("C-001");
@@ -186,9 +197,21 @@ export default function Dashboard() {
                         </Subtitle>
                     </div>
                     <div className="flex items-center gap-2">
+                        {user && (
+                            <span className="px-3 py-1 border-2 border-neo-black bg-white text-[10px] font-black uppercase tracking-widest">
+                                {user.id}
+                            </span>
+                        )}
                         <span className="px-3 py-1 border-2 border-neo-black bg-white text-[10px] font-black uppercase tracking-widest">
                             Final Round · IUB Hackathon
                         </span>
+                        <Button
+                            variant="dark"
+                            size="sm"
+                            onClick={handleLogout}
+                        >
+                            <LogOut size={14} strokeWidth={3} /> LOG OUT
+                        </Button>
                     </div>
                 </header>
 

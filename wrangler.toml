@@ -2,6 +2,18 @@ name = "contract-review"
 pages_build_output_dir = "./dist"
 compatibility_date = "2026-08-01"
 
+# Login secrets — read by functions/api/login.js as env.ID and env.password.
+# Set them in the Cloudflare dashboard (Pages → Settings → Environment variables)
+# or via:
+#   wrangler pages secret put ID       --project-name contract-review
+#   wrangler pages secret put PASSWORD --project-name contract-review
+#   wrangler pages secret put SESSION_SECRET --project-name contract-review
+#
+# Local dev: create .dev.vars (gitignored) with:
+#   ID="your-id"
+#   password="your-password"
+#   SESSION_SECRET="any-long-random-string"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "contract-review-db"
