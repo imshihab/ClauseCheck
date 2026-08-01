@@ -194,7 +194,10 @@ export default function Dashboard() {
     async function handleUpload() {
         const content = uploadContent;
         if (!content.trim()) {
-            setUploadStatus({ kind: "err", message: "Paste a contract first." });
+            setUploadStatus({
+                kind: "err",
+                message: "Paste a contract first.",
+            });
             return;
         }
         setUploading(true);
@@ -217,7 +220,10 @@ export default function Dashboard() {
                 message: `Uploaded ${created.id} — ${created.title}`,
             });
         } catch (e) {
-            setUploadStatus({ kind: "err", message: e.message || "Upload failed." });
+            setUploadStatus({
+                kind: "err",
+                message: e.message || "Upload failed.",
+            });
         } finally {
             setUploading(false);
         }
@@ -248,11 +254,7 @@ export default function Dashboard() {
                         <span className="px-3 py-1 border-2 border-neo-black bg-white text-[10px] font-black uppercase tracking-widest">
                             Final Round · IUB Hackathon
                         </span>
-                        <Button
-                            variant="dark"
-                            size="sm"
-                            onClick={handleLogout}
-                        >
+                        <Button variant="dark" size="sm" onClick={handleLogout}>
                             <LogOut size={14} strokeWidth={3} /> LOG OUT
                         </Button>
                     </div>
@@ -408,11 +410,19 @@ export default function Dashboard() {
                                         uploading || !uploadContent.trim()
                                     }
                                 >
-                                    {uploading ? "Uploading…" : "Upload contract"}
+                                    {uploading
+                                        ? "Uploading…"
+                                        : "Upload contract"}
                                 </Button>
                             </div>
                             {uploadStatus && (
-                                <Banner kind={uploadStatus.kind === "ok" ? "success" : "error"}>
+                                <Banner
+                                    kind={
+                                        uploadStatus.kind === "ok"
+                                            ? "success"
+                                            : "error"
+                                    }
+                                >
                                     {uploadStatus.message}
                                 </Banner>
                             )}
@@ -515,7 +525,7 @@ export default function Dashboard() {
                                 <div className="flex items-center gap-2">
                                     <span className="px-2 py-1 border-2 border-white text-[10px] font-black uppercase tracking-widest">
                                         {results.source === "ai"
-                                            ? "Powered by Claude"
+                                            ? "Powered by Gemini"
                                             : "Local deterministic fallback"}
                                     </span>
                                 </div>
