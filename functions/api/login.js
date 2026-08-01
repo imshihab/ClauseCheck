@@ -1,24 +1,6 @@
-// functions/api/login.js
-//
-// Cloudflare Pages Function. Validates the submitted ID + password against
-// the secrets set on the Pages project as `ID` and `PASSWORD` (case-sensitive,
-// matching `env.ID` and `env.password`).
-//
-// On success, sets an httpOnly session cookie that /api/me will accept.
+import { json, COOKIE_NAME } from "./_session.js";
 
-const COOKIE_NAME = "cc_session";
-// 12-hour session. Pages Functions can read this from the request.
 const SESSION_MAX_AGE = 60 * 60 * 12;
-
-function json(data, init = {}) {
-    return new Response(JSON.stringify(data), {
-        ...init,
-        headers: {
-            "content-type": "application/json",
-            ...(init.headers || {}),
-        },
-    });
-}
 
 function timingSafeEqual(a, b) {
     // Constant-time string compare. Both inputs must be strings.

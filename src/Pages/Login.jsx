@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { useNavigate, useLocation, Navigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { Lock, User, ArrowRight, ShieldAlert, ScrollText } from "lucide-react";
-import { Button, Card, Input, Title, Subtitle } from "../components/NeoUI";
+import { Banner, Button, Card, Input, Title, Subtitle } from "../components/NeoUI";
 import { useAuth } from "../lib/auth";
 
 export default function Login() {
@@ -14,11 +14,12 @@ export default function Login() {
     const [error, setError] = useState(null);
     const [submitting, setSubmitting] = useState(false);
 
-    // If already authenticated, bounce to the dashboard.
-    if (user) {
-        const dest = location.state?.from?.pathname || "/";
-        return <Navigate to={dest} replace />;
-    }
+    React.useEffect(() => {
+        if (user) {
+            const dest = location.state?.from?.pathname || "/";
+            navigate(dest, { replace: true });
+        }
+    }, [user, navigate, location]);
 
     async function onSubmit(e) {
         e.preventDefault();
@@ -26,8 +27,6 @@ export default function Login() {
         setSubmitting(true);
         try {
             await login({ id: id.trim(), password });
-            const dest = location.state?.from?.pathname || "/";
-            navigate(dest, { replace: true });
         } catch (err) {
             setError(err.message || "Login failed.");
         } finally {
@@ -38,7 +37,6 @@ export default function Login() {
     return (
         <div className="min-h-screen bg-neo-bg flex items-center justify-center p-6">
             <div className="w-full max-w-md flex flex-col gap-6">
-                {/* Brand header */}
                 <header className="flex flex-col items-start gap-3">
                     <div className="flex items-center gap-3">
                         <div className="bg-neo-yellow border-2 border-neo-black p-2 shadow-neo-sm">
@@ -111,13 +109,9 @@ export default function Login() {
                         </div>
 
                         {error && (
-                            <div className="border-2 border-neo-black bg-neo-red text-white p-3 text-sm font-bold flex items-center gap-2">
-                                <ShieldAlert
-                                    size={16}
-                                    strokeWidth={2.5}
-                                />
+                            <Banner kind="error" icon={ShieldAlert}>
                                 {error}
-                            </div>
+                            </Banner>
                         )}
 
                         <Button
@@ -133,6 +127,25 @@ export default function Login() {
                             )}
                         </Button>
                     </form>
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setId("hackathon");
+                            setPassword("hackathon");
+                        }}
+                        className="border-2 border-dashed border-neo-black bg-neo-gray hover:bg-neo-yellow p-3 text-left flex flex-col gap-1 transition-colors"
+                        title="Click to autofill demo credentials"
+                    >
+                        <span className="text-[10px] font-black uppercase tracking-widest">
+                            Demo Credentials (click to autofill)
+                        </span>
+                        <span className="text-xs font-mono font-bold">
+                            ID: <span className="bg-neo-white border border-neo-black px-1.5 py-0.5">hackathon</span>
+                            <span className="mx-2">·</span>
+                            Password: <span className="bg-neo-white border border-neo-black px-1.5 py-0.5">hackathon</span>
+                        </span>
+                    </button>
                 </Card>
 
                 <footer className="text-center text-[10px] font-black uppercase tracking-widest text-neo-black/50">

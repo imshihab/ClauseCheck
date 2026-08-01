@@ -17,8 +17,10 @@ import {
     LogOut,
 } from "lucide-react";
 import {
+    Banner,
     Button,
     Card,
+    Input,
     Select,
     Textarea,
     Title,
@@ -28,7 +30,6 @@ import {
 } from "../components/NeoUI";
 import {
     CLAUSE_TYPES,
-    extractTitle,
     loadContract,
     loadContractList,
     loadMissingCases,
@@ -38,6 +39,7 @@ import {
 import { analyzeContract } from "../lib/analyze";
 import { useAuth } from "../lib/auth";
 import { useNavigate } from "react-router";
+import { createContract } from "../lib/contracts";
 
 const DECISION_LABELS = {
     pending: {
@@ -80,9 +82,13 @@ export default function Dashboard() {
 
     const [standards, setStandards] = useState([]);
     const [contracts, setContracts] = useState([]);
-    const [contractId, setContractId] = useState("C-001");
+    const [contractId, setContractId] = useState("");
     const [contractText, setContractText] = useState("");
-    const [contractTitle, setContractTitle] = useState("");
+
+    const [uploadTitle, setUploadTitle] = useState("");
+    const [uploadContent, setUploadContent] = useState("");
+    const [uploading, setUploading] = useState(false);
+    const [uploadStatus, setUploadStatus] = useState(null); // {kind: 'ok'|'err', message}
 
     const [selectedTypes, setSelectedTypes] = useState(
         CLAUSE_TYPES.map((c) => c.id),
@@ -97,7 +103,11 @@ export default function Dashboard() {
 
     const [decisions, setDecisions] = useState({}); // clauseType -> {status, notes}
 
-    // Initial data load.
+    const contractTitle = useMemo(
+        () => contracts.find((c) => c.id === contractId)?.title || contractId,
+        [contracts, contractId],
+    );
+
     useEffect(() => {
         (async () => {
             const [s, list, q, mi] = await Promise.all([
@@ -110,10 +120,12 @@ export default function Dashboard() {
             setContracts(list);
             setQuestions(q);
             setMissingCases(mi);
+            if (list.length > 0) {
+                setContractId((prev) => prev || list[0].id);
+            }
         })();
     }, []);
 
-    // Whenever the contract changes, load its text.
     useEffect(() => {
         if (!contractId) return;
         let cancelled = false;
@@ -122,7 +134,6 @@ export default function Dashboard() {
                 const text = await loadContract(contractId);
                 if (cancelled) return;
                 setContractText(text);
-                setContractTitle(extractTitle(text) || contractId);
                 setResults(null);
                 setDecisions({});
             } catch (e) {
@@ -180,6 +191,38 @@ export default function Dashboard() {
         setContractId(q.contract_id);
     }
 
+    async function handleUpload() {
+        const content = uploadContent;
+        if (!content.trim()) {
+            setUploadStatus({ kind: "err", message: "Paste a contract first." });
+            return;
+        }
+        setUploading(true);
+        setUploadStatus(null);
+        try {
+            const created = await createContract({
+                title: uploadTitle.trim(),
+                content,
+            });
+            // Splice the new row into the existing list — server returns
+            // {id, title, created_at, uploaded_by} which already matches the
+            // list shape, and `created` is the newest row so appending keeps
+            // the ASC ordering from the server.
+            setContracts((prev) => [...prev, created]);
+            setContractId(created.id);
+            setUploadContent("");
+            setUploadTitle("");
+            setUploadStatus({
+                kind: "ok",
+                message: `Uploaded ${created.id} — ${created.title}`,
+            });
+        } catch (e) {
+            setUploadStatus({ kind: "err", message: e.message || "Upload failed." });
+        } finally {
+            setUploading(false);
+        }
+    }
+
     return (
         <div className="min-h-screen bg-neo-bg">
             <div className="max-w-5xl mx-auto p-4 md:p-8 flex flex-col gap-6">
@@ -235,9 +278,9 @@ export default function Dashboard() {
                                 value={contractId}
                                 onChange={(e) => setContractId(e.target.value)}
                             >
-                                {contracts.map((id) => (
-                                    <option key={id} value={id}>
-                                        {id}
+                                {contracts.map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                        {c.id} — {c.title}
                                     </option>
                                 ))}
                             </Select>
@@ -309,6 +352,72 @@ export default function Dashboard() {
                             </div>
                         </details>
                     )}
+
+                    <details className="border-2 border-neo-black bg-neo-bg">
+                        <summary className="cursor-pointer p-3 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-neo-yellow">
+                            <FileText size={14} strokeWidth={2.5} />
+                            Upload a new contract
+                        </summary>
+                        <div className="border-t-2 border-neo-black p-3 flex flex-col gap-3">
+                            <p className="text-xs text-neo-black/70">
+                                Paste the contract text below. A new id like
+                                <code className="mx-1 font-mono">U-…</code>
+                                is assigned automatically. Include a
+                                <code className="mx-1 font-mono">Title: …</code>
+                                line for a friendly name.
+                            </p>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest">
+                                    Title (optional)
+                                </label>
+                                <Input
+                                    type="text"
+                                    placeholder="Auto-detected from the contract if blank"
+                                    value={uploadTitle}
+                                    onChange={(e) =>
+                                        setUploadTitle(e.target.value)
+                                    }
+                                    disabled={uploading}
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest">
+                                    Contract text
+                                </label>
+                                <Textarea
+                                    rows={8}
+                                    placeholder="Paste the full contract here…"
+                                    value={uploadContent}
+                                    onChange={(e) =>
+                                        setUploadContent(e.target.value)
+                                    }
+                                    disabled={uploading}
+                                    className="font-mono text-xs"
+                                />
+                            </div>
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-neo-black/50">
+                                    {uploadContent.length} chars
+                                </span>
+                                <Button
+                                    type="button"
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={handleUpload}
+                                    disabled={
+                                        uploading || !uploadContent.trim()
+                                    }
+                                >
+                                    {uploading ? "Uploading…" : "Upload contract"}
+                                </Button>
+                            </div>
+                            {uploadStatus && (
+                                <Banner kind={uploadStatus.kind === "ok" ? "success" : "error"}>
+                                    {uploadStatus.message}
+                                </Banner>
+                            )}
+                        </div>
+                    </details>
                 </Card>
 
                 {/* STEP 2 — CLAUSE TYPES */}
@@ -382,11 +491,7 @@ export default function Dashboard() {
                             </>
                         )}
                     </Button>
-                    {error && (
-                        <div className="border-2 border-neo-black bg-neo-red text-white p-3 text-sm font-bold">
-                            {error}
-                        </div>
-                    )}
+                    {error && <Banner kind="error">{error}</Banner>}
                 </Card>
 
                 {/* RESULTS */}

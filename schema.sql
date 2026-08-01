@@ -1,5 +1,5 @@
 -- schema.sql
-CREATE TABLE reviews (
+CREATE TABLE IF NOT EXISTS reviews (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   contract_id TEXT NOT NULL,
   clause_type TEXT NOT NULL,
@@ -11,3 +11,13 @@ CREATE TABLE reviews (
   reviewer_notes TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS contracts (
+  id           TEXT PRIMARY KEY,
+  title        TEXT NOT NULL,
+  content      TEXT NOT NULL,
+  uploaded_by  TEXT,
+  created_at   TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_contracts_created_at ON contracts(created_at);

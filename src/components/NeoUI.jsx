@@ -145,3 +145,22 @@ export const TogglePill = ({ active, children, onClick }) => (
         {children}
     </button>
 );
+
+// --- BANNER ---
+// Shared status banner used for inline success/error feedback across the app.
+// `kind` picks the palette; pass any extra classes via className.
+export const Banner = ({ kind = "info", icon: Icon, children, className = "" }) => {
+    const palette = {
+        success: "bg-neo-green text-white",
+        error: "bg-neo-red text-white",
+        info: "bg-neo-bg text-neo-black",
+    }[kind] || "bg-neo-bg text-neo-black";
+    return (
+        <div
+            className={`border-2 border-neo-black p-3 text-sm font-bold flex items-center gap-2 ${palette} ${className}`}
+        >
+            {Icon ? <Icon size={16} strokeWidth={2.5} /> : null}
+            {children}
+        </div>
+    );
+};
